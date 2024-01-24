@@ -6,10 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.validation.constraints.Null;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -38,28 +35,18 @@ public class JWTService {
         return getClaim(token, Claims::getSubject);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.JWT_EXPIRATION))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
+    public String generateTokenWithClaims(String username, Map<String, Object> extraClaims) {
 
-    public String generateTokenWithClaims(String username, Map<String, Object> claims) {
         return Jwts.builder()
-                .setClaims(claims)
                 .setSubject(username)
+                .setClaims(extraClaims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.JWT_EXPIRATION))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-
-    public String generateRefreshToken(Map<String, Object> extraClaims, String username) {
+    public String generateRefreshToken(String username, Map<String, Object> extraClaims, ) {
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(username)

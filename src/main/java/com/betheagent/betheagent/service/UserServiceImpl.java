@@ -1,5 +1,6 @@
 package com.betheagent.betheagent.service;
 
+import com.betheagent.betheagent.config.CustomUserDetailsService;
 import com.betheagent.betheagent.config.JWTService;
 import com.betheagent.betheagent.dto.requestDto.LoginDto;
 import com.betheagent.betheagent.dto.requestDto.SignUpDto;
@@ -12,24 +13,28 @@ import com.betheagent.betheagent.enums.AuthenticationType;
 import com.betheagent.betheagent.exception.customExceptions.UsernameOrEmailAlreadyExistsException;
 import com.betheagent.betheagent.repository.TokenRepository;
 import com.betheagent.betheagent.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
-
+    private final CustomUserDetailsService userDetailsService;
     private final JWTService jwtService;
 
     private final AuthenticationManager authenticationManager;
@@ -40,7 +45,8 @@ public class UserServiceImpl implements UserService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserInstance user = userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
 
-        String token = jwtService.generateTokenWithClaims(user.getUsername(), new HashMap<>());
+        String token = jwtService.generateTokenWithClaims(user.getUsername(), generateClaimsFromUser(user.getUsername()));
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername(), generateClaimsFromUser(user.getUsername()));
         revokeValidTokens(user);
         TokenEntity tokenEntity = TokenEntity.builder()
                 .token(token)
@@ -51,13 +57,16 @@ public class UserServiceImpl implements UserService {
                 .build();
         tokenRepository.save(tokenEntity);
 
-        return mapToAuthenticationResponse(AuthenticationType.LOGIN, user);
+        AuthenticationResponseDto authenticationResponseDto = mapToAuthenticationResponse(AuthenticationType.LOGIN, user, "LOGIN SUCCESSFUL");
+        authenticationResponseDto.setToken(token);
+        authenticationResponseDto.setRefreshToken(refreshToken);
+        return authenticationResponseDto;
     }
 
     @Override
     public AuthenticationResponseDto signup(SignUpDto signUpDto) {
 
-        Boolean isConflict = userRepository.existsByUsernameOrEmail(signUpDto.getUsername(), signUpDto.getEmail());
+        boolean isConflict = userRepository.existsByUsernameOrEmail(signUpDto.getUsername(), signUpDto.getEmail());
 
         if (isConflict) {
             throw new UsernameOrEmailAlreadyExistsException("Username or email already exists");
@@ -74,7 +83,49 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         userRepository.save(user);
-        return mapToAuthenticationResponse(AuthenticationType.SIGN_UP, user);
+        return mapToAuthenticationResponse(AuthenticationType.SIGN_UP, user, "SIGNUP SUCCESSFUL");
+    }
+
+    @Override
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        final java.lang.String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+
+        java.lang.String refreshToken = authHeader.substring(7);
+        java.lang.String username = jwtService.getUsername(refreshToken);
+
+        if (username != null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            var user = this.userRepository.findByUsernameOrEmail(userDetails.getUsername(), userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Show yourself if you are the problem"));
+
+            if (jwtService.isTokenValid(refreshToken, userDetails)) {
+
+                Map<java.lang.String, Object> claims = generateClaimsFromUser(user.getUsername());
+
+                var accessToken = jwtService.generateTokenWithClaims(user.getUsername(), claims);
+                revokeValidTokens(user);
+                TokenEntity tokenEntity = TokenEntity.builder()
+                        .user(user)
+                        .token(accessToken)
+                        .tokenType(TokenType.BEARER)
+                        .isExpired(false)
+                        .isRevoked(false)
+                        .build();
+
+                var t = tokenRepository.save(tokenEntity);
+                var authResponse = AuthenticationResponseDto.builder()
+                        .message("Refresh token used to generate access token successfully")
+                        .userId(user.getId())
+                        .authenticationType(AuthenticationType.REFRESH_TOKEN)
+                        .token(accessToken)
+                        .refreshToken(refreshToken)
+                        .build();
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+            }
+        }
     }
 
     private void revokeValidTokens(UserInstance user) {
@@ -88,9 +139,11 @@ public class UserServiceImpl implements UserService {
         tokenRepository.deleteAll(tokenList);
     }
 
-    private AuthenticationResponseDto mapToAuthenticationResponse(AuthenticationType authenticationType, UserInstance user){
+    private AuthenticationResponseDto mapToAuthenticationResponse(AuthenticationType authenticationType, UserInstance user, String message){
         return AuthenticationResponseDto.builder()
                 .authenticationType(authenticationType)
+                .message(message)
+                .userId(user.getId())
                 .username(user.getUsername())
                 .firstName(user.getFirstname())
                 .middleName(user.getMiddlename())
@@ -98,4 +151,14 @@ public class UserServiceImpl implements UserService {
                 .lastName(user.getLastname())
                 .build();
     }
+
+    private Map<String, Object> generateClaimsFromUser(String username){
+        UserInstance user =  userRepository.findByUsernameOrEmail(username, username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoleTypes());
+        claims.put("email", user.getEmail());
+        return claims;
+    }
+
 }

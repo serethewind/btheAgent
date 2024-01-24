@@ -10,6 +10,9 @@ import lombok.*;
 @Builder
 public class AuthenticationResponseDto {
     private AuthenticationType authenticationType;
+    private String message;
+
+    private String userId;
     private String username;
     private String email;
     private String phoneNumber;
@@ -18,4 +21,7 @@ public class AuthenticationResponseDto {
     private String middleName;
     private String dateOfBirth;
     private String gender;
+
+    private String token;
+    private String refreshToken;
 }
