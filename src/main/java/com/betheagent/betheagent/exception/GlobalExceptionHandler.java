@@ -1,5 +1,6 @@
 package com.betheagent.betheagent.exception;
 
+import com.betheagent.betheagent.exception.customExceptions.PropertyNotFoundException;
 import com.betheagent.betheagent.exception.customExceptions.ResourceNotFoundException;
 import com.betheagent.betheagent.exception.customExceptions.UsernameOrEmailAlreadyExistsException;
 import org.springframework.http.HttpHeaders;
@@ -54,6 +55,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(UsernameOrEmailAlreadyExistsException.class)
     public ResponseEntity<ErrorDetails> handleUsernameOrEmailAlreadyExistsException(Exception exception, WebRequest webRequest){
         return ResponseEntity.status(HttpStatus.CONFLICT).body(mapToErrorDetails(exception, "CONFLICT", webRequest));
+    }
+
+    @ExceptionHandler(PropertyNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleResponseNotFoundException(Exception exception, WebRequest webRequest){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapToErrorDetails(exception, "PROPERTY_NOT_FOUND", webRequest));
     }
 
     private ErrorDetails mapToErrorDetails(Exception exception, String errorCodeMessage, WebRequest webRequest){
