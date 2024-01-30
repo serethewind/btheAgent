@@ -2,9 +2,11 @@ package com.betheagent.betheagent.authorization.entity;
 
 import com.betheagent.betheagent.audit.BaseEntity;
 import com.betheagent.betheagent.authorization.entity.enums.RoleType;
+import com.betheagent.betheagent.properties.entity.Favourites;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -29,5 +31,6 @@ public class UserInstance extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Set<RoleType> roleTypes;
     private Boolean isEnabled;
-
+    @OneToMany(mappedBy = "user")
+    private List<Favourites> favouriteProperties;
 }
