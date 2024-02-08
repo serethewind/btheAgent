@@ -1,5 +1,6 @@
 package com.betheagent.betheagent.properties.entity;
 
+import com.betheagent.betheagent.audit.BaseEntity;
 import com.betheagent.betheagent.authorization.entity.UserInstance;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @Setter
 @Builder
 @Entity
-public class Favourites {
+public class Favourites extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -18,7 +19,7 @@ public class Favourites {
     @ManyToOne
     @JoinColumn(name = "userId")
     private UserInstance user;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "propertyId")
     private PropertyEntity property;
 }

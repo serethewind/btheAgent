@@ -67,7 +67,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorDetails> handleBadRequestException(Exception exception, WebRequest webRequest){
-        return ResponseEntity.status(HttpStatus.OK).body(mapToErrorDetails(exception, "INTERNAL_SERVER_ERROR", webRequest));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapToErrorDetails(exception, "INTERNAL_SERVER_ERROR", webRequest));
+    }
+
+    @ExceptionHandler(BookingResourceNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleBookingResourceNotFoundException(Exception exception, WebRequest webRequest){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapToErrorDetails(exception, "BOOKING_NOT_FOUND", webRequest));
     }
 
     private ErrorDetails mapToErrorDetails(Exception exception, String errorCodeMessage, WebRequest webRequest){

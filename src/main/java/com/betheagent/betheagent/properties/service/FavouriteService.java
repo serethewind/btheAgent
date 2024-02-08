@@ -7,4 +7,6 @@ public interface FavouriteService {
     WishListResponseDto addPropertyToWishList(String userId, WishListRequestDto wishListRequestDto);
 
     WishListResponseDto removePropertyFromList(String userId, String wishListId);
+
+    WishListResponseDto removeAllFavourites(String userId);
 }

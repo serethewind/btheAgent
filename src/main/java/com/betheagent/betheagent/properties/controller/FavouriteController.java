@@ -24,4 +24,9 @@ public class FavouriteController {
     public ResponseEntity<WishListResponseDto> removePropertyFromWishList(@PathVariable("userId") String userId, @PathVariable("listId")String wishListId){
         return ResponseEntity.status(HttpStatus.OK).body(favouriteService.removePropertyFromList(userId, wishListId));
     }
+
+    @PutMapping("/remove-all-items/{userId}/")
+    public ResponseEntity<WishListResponseDto> removeAllPropertiesFromWishList(@PathVariable("userId") String userId){
+        return ResponseEntity.status(HttpStatus.OK).body(favouriteService.removeAllFavourites(userId));
+    }
 }

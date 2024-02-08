@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 @Getter
@@ -20,11 +21,11 @@ import java.time.Instant;
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
     @CreatedDate
-    private Instant createdDate;
+    private LocalDateTime createdDate;
     @CreatedBy
     private String createdBy;
     @LastModifiedBy
     private String updatedBy;
     @LastModifiedDate
-    private Instant updatedDate;
+    private LocalDateTime updatedDate;
 }

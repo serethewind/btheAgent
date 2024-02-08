@@ -29,17 +29,6 @@ public class PageRequestDto {
     private Sort.Direction sortDirection = Sort.Direction.ASC;
     private String sortByColumn = "id";
 
-//    public Pageable getPageable(PageRequestDto pageRequestDto) {
-//
-//        Integer pageNo = Objects.nonNull(pageRequestDto.getPageNo()) ? pageRequestDto.getPageNo() : this.pageNo;
-//        Integer pageSize = Objects.nonNull(pageRequestDto.getPageSize()) ? pageRequestDto.getPageSize() : this.pageSize;
-//        Sort.Direction sortDirection = Objects.nonNull(pageRequestDto.getSortDirection()) ? pageRequestDto.getSortDirection() : this.sortDirection;
-//        String sortByColumn = Objects.nonNull(pageRequestDto.getSortByColumn()) ? pageRequestDto.getSortByColumn() : this.sortByColumn;
-//
-//        PageRequest request = PageRequest.of(pageNo, pageSize, sortDirection, sortByColumn);
-//
-//        return request;
-//    }
     public Pageable getPageable() {
         return PageRequest.of(
                 Optional.ofNullable(this.pageNo).orElse(0),

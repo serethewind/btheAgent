@@ -14,14 +14,15 @@ import com.betheagent.betheagent.properties.repository.PropertyRepository;
 import com.betheagent.betheagent.properties.service.PropertyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PagedListHolder;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.support.PropertyComparator;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -71,17 +72,14 @@ public class PropertyServiceImpl implements PropertyService {
     public Page<PropertyResponseDto> viewAllProperties(Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
         PageRequestDto pageRequestDto = mapRequestParamToPageRequestDto(pageNo, pageSize, sortDirection, byColumn);
         List<PropertyResponseDto> propertyList = propertyRepository.findAll().stream().map(this::mapPropertyEntityToPropertyResponse).collect(Collectors.toList());
-        PagedListHolder<PropertyResponseDto> propertyPagedListHolder = convertListToPageListHolder(propertyList, pageRequestDto);
-        return defineComparatorAndConvertToPage(propertyPagedListHolder, pageRequestDto, propertyList.size());
-
+        return createPage(pageNo, pageSize, propertyList);
     }
 
     @Override
     public Page<PropertyResponseDto> viewAllPropertiesByUser(String userId, Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
         PageRequestDto pageRequestDto = mapRequestParamToPageRequestDto(pageNo, pageSize, sortDirection, byColumn);
         List<PropertyResponseDto> propertyList = propertyRepository.findAllPropertiesByUserId(userId).map(this::mapPropertyEntityToPropertyResponse).toList();
-        PagedListHolder<PropertyResponseDto> propertyPagedListHolder = convertListToPageListHolder(propertyList, pageRequestDto);
-        return defineComparatorAndConvertToPage(propertyPagedListHolder, pageRequestDto, propertyList.size());
+        return createPage(pageNo, pageSize, propertyList);
     }
 
     @Override
@@ -119,8 +117,7 @@ public class PropertyServiceImpl implements PropertyService {
                 )
         ).stream().map(this::mapPropertyEntityToPropertyResponse).toList();
 
-        PagedListHolder<PropertyResponseDto> propertyResponseDtoPagedListHolder = convertListToPageListHolder(propertyResponseDtoList, pageRequestDto);
-        return defineComparatorAndConvertToPage(propertyResponseDtoPagedListHolder, pageRequestDto, propertyResponseDtoList.size());
+        return createPage(pageNo, pageSize, propertyResponseDtoList);
     }
 
 
@@ -145,20 +142,11 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     private PageRequestDto mapRequestParamToPageRequestDto(Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
-        DirectionOfSorting sorting;
-
-        if (sortDirection == null) {
-            sorting = DirectionOfSorting.ASC;
-        } else {
-            try {
-                sorting = DirectionOfSorting.valueOf(sortDirection.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                sorting = DirectionOfSorting.ASC;
-            }
-        }
+        DirectionOfSorting sorting = getDirectionOfSorting(sortDirection);
 
         return new PageRequestDto(pageNo, pageSize, sorting.equals(DirectionOfSorting.ASC) ? Sort.Direction.ASC : Sort.Direction.DESC, byColumn);
     }
+
 
     /**
      * Converts a list to a {@link PagedListHolder} with pagination settings.
@@ -187,14 +175,74 @@ public class PropertyServiceImpl implements PropertyService {
      * @return A paginated {@link Page} based on the sorted list.
      */
     private <T> Page<T> defineComparatorAndConvertToPage(PagedListHolder<T> pagedListHolder, PageRequestDto pageRequestDto, long pageTotal) {
-
         List<T> pageSlice = pagedListHolder.getPageList();
         log.info("check");
-
 //        PropertyComparator.sort(pageSlice, new MutableSortDefinition(pageRequestDto.getSortByColumn(), true, pageRequestDto.getSortDirection().isAscending()));
         log.info("testing mic");
-
         return new PageImpl<>(pageSlice, pageRequestDto.getPageable(), pageTotal);
-
     }
+
+    private static DirectionOfSorting getDirectionOfSorting(String sortDirection) {
+        DirectionOfSorting sorting;
+
+        if (sortDirection == null) {
+            sorting = DirectionOfSorting.ASC;
+        } else {
+            try {
+                sorting = DirectionOfSorting.valueOf(sortDirection.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.info("Wrong sort direction passed. Rendered to default which is ascending");
+                sorting = DirectionOfSorting.ASC;
+            }
+        }
+        return sorting;
+    }
+
+    private <T> Page<T> createPage(int pageNo, int pageSize, List<T> list) {
+        // Handle empty list
+        if (list.isEmpty()) {
+            return Page.empty();
+        }
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+
+        // Handle invalid page number
+        int totalPages = (list.size() + pageSize - 1) / pageSize;
+        if (pageNo < 0 || pageNo >= totalPages) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        PagedListHolder<T> listHolder = new PagedListHolder<>(list);
+        listHolder.setPage(pageNo);
+        listHolder.setPageSize(pageSize);
+
+        return new PageImpl<>(listHolder.getPageList(), pageable, list.size());
+    }
+
+    private <T> Page<T> createPage(int pageNo, int pageSize, List<T> list, String sorting, String sortProperty) {
+        // Handle empty list
+        if (list.isEmpty()) {
+            return Page.empty();
+        }
+
+        DirectionOfSorting sort = getDirectionOfSorting(sorting);
+
+        Sort.Direction sortDirection = sort.equals(DirectionOfSorting.ASC) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        //if sort by property is not specified, then leave it.
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(sortDirection, sortProperty));
+
+        // Handle invalid page number
+        int totalPages = (list.size() + pageSize - 1) / pageSize;
+        if (pageNo < 0 || pageNo >= totalPages) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        PagedListHolder<T> listHolder = new PagedListHolder<>(list);
+        listHolder.setPage(pageNo);
+        listHolder.setPageSize(pageSize);
+
+        return new PageImpl<>(listHolder.getPageList(), pageable, list.size());
+    }
+
 }

@@ -73,7 +73,7 @@ public class PropertyController {
      * @return A ResponseEntity containing a page of CreateCohortResponse based on the applied filters.
      */
     @GetMapping("filter-properties")
-    public ResponseEntity<Page<PropertyResponseDto>> filterCohorts(
+    public ResponseEntity<Page<PropertyResponseDto>> filterProperties(
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) String propertyName,
             @RequestParam(required = false) String propertyType,
