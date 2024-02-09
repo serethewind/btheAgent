@@ -9,6 +9,7 @@ import com.betheagent.betheagent.booking.dto.response.InspectionResponseDto;
 import com.betheagent.betheagent.booking.entity.InspectionBooking;
 import com.betheagent.betheagent.booking.repository.InspectionRepository;
 import com.betheagent.betheagent.booking.service.InspectionService;
+import com.betheagent.betheagent.exception.customExceptions.BadRequestException;
 import com.betheagent.betheagent.exception.customExceptions.BookingResourceNotFoundException;
 import com.betheagent.betheagent.exception.customExceptions.PropertyNotFoundException;
 import com.betheagent.betheagent.exception.customExceptions.UserResourceNotFoundException;
@@ -20,7 +21,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,6 +79,27 @@ public class InspectionServiceImpl implements InspectionService {
     public Page<InspectionResponseDto> findAllBookingsByPropertyId(String propertyId, Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
       List<InspectionResponseDto> inspectionResponseDtoList = inspectionRepository.findAllBookingsByPropertyId(propertyId).map(this::mapBookingEntityToDto).toList();
       return createPage(pageNo, pageSize, inspectionResponseDtoList);
+    }
+
+    @Override
+    public InspectionResponseDto cancelBooking(String propertyId) {
+       InspectionBooking booking = inspectionRepository.findById(propertyId).orElseThrow(() -> new BookingResourceNotFoundException("Booking resource not found. Cancel Booking operation failed."));
+       if (booking.getInspectionStatus().equals(InspectionStatus.CANCELLED)) {
+           throw new BadRequestException("Booking already cancelled. Cancel Booking operation failed");
+       }
+       booking.setInspectionStatus(InspectionStatus.CANCELLED);
+       inspectionRepository.save(booking);
+       return mapBookingEntityToDto(booking);
+    }
+    @Override
+    public InspectionResponseDto confirmBookingStatus(String propertyId) {
+        InspectionBooking booking = inspectionRepository.findById(propertyId).orElseThrow(() -> new BookingResourceNotFoundException("Booking resource not found. Cancel Booking operation failed."));
+        if (booking.getInspectionStatus().equals(InspectionStatus.CONFIRMED)) {
+            throw new BadRequestException("Booking already confirmed. Cancel Booking operation failed");
+        }
+        booking.setInspectionStatus(InspectionStatus.CONFIRMED);
+        inspectionRepository.save(booking);
+        return mapBookingEntityToDto(booking);
     }
 
     private InspectionResponseDto mapBookingEntityToDto(InspectionBooking booking) {

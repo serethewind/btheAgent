@@ -2,10 +2,7 @@ package com.betheagent.betheagent.booking.entity;
 
 import com.betheagent.betheagent.audit.BaseEntity;
 import com.betheagent.betheagent.booking.dto.enums.InspectionStatus;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -23,8 +20,8 @@ public class InspectionBooking extends BaseEntity {
     private String userId;
     private String propertyId;
     private LocalDateTime inspectionDateTime;
+    @Enumerated(EnumType.STRING)
     private InspectionStatus inspectionStatus;
-
     private String comment;
     private String feedback;
 }

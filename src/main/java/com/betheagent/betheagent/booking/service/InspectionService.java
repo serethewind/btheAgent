@@ -14,4 +14,8 @@ public interface InspectionService {
     Page<InspectionResponseDto> findAllBookingsByUserId(String userId, Integer pageNo, Integer pageSize, String sortDirection, String byColumn);
 
     Page<InspectionResponseDto> findAllBookingsByPropertyId(String propertyId, Integer pageNo, Integer pageSize, String sortDirection, String byColumn);
+
+    InspectionResponseDto cancelBooking(String propertyId);
+
+    InspectionResponseDto confirmBookingStatus(String propertyId);
 }
