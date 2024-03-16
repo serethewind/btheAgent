@@ -10,13 +10,13 @@ import com.betheagent.betheagent.properties.dto.enums.Status;
 import com.betheagent.betheagent.properties.dto.request.WishListRequestDto;
 import com.betheagent.betheagent.properties.dto.response.WishListResponseDto;
 import com.betheagent.betheagent.properties.entity.Favourites;
-import com.betheagent.betheagent.properties.entity.PropertyEntity;
+
+import com.betheagent.betheagent.properties.entity.PropertyInstance;
 import com.betheagent.betheagent.properties.repository.FavouriteRepository;
 import com.betheagent.betheagent.properties.repository.PropertyRepository;
 import com.betheagent.betheagent.properties.service.FavouriteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,7 +35,7 @@ public class FavouriteServiceImpl implements FavouriteService {
     public WishListResponseDto addPropertyToWishList(String userId, WishListRequestDto wishListRequestDto) {
         UserInstance user = userRepository.findById(userId).orElseThrow(() -> new UserResourceNotFoundException("User with id not found. Adding property to wishlist operation failed"));
 
-        PropertyEntity property = propertyRepository.findById(wishListRequestDto.getPropertyId()).orElseThrow(() -> new PropertyNotFoundException("Property with id not found. Adding property to wishlist operation failed"));
+        PropertyInstance property = propertyRepository.findById(wishListRequestDto.getPropertyId()).orElseThrow(() -> new PropertyNotFoundException("Property with id not found. Adding property to wishlist operation failed"));
 
         Favourites favourite = Favourites.builder()
                 .comment(wishListRequestDto.getComment())

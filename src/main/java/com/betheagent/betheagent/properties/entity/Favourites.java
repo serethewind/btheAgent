@@ -21,5 +21,5 @@ public class Favourites extends BaseEntity {
     private UserInstance user;
     @ManyToOne
     @JoinColumn(name = "propertyId")
-    private PropertyEntity property;
+    private PropertyInstance property;
 }

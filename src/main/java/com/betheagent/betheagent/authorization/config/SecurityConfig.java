@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(httpRequest ->
-                        httpRequest.requestMatchers("").permitAll()
+                        httpRequest.requestMatchers("api/v1/btheagent/reg/**").permitAll()
                                 .anyRequest().authenticated()
                 );
         http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);

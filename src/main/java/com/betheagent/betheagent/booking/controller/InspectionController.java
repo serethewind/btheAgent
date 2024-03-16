@@ -20,11 +20,6 @@ public class InspectionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(inspectionService.createBookingForInspection(propertyId, inspectionRequestDto));
     }
 
-    @PutMapping("/update-booking-details/{inspectionId}")
-    public ResponseEntity<InspectionResponseDto> updateBooking(@PathVariable("inspectionId")String inspectionId, @RequestBody UpdateInspectionRequestDto inspectionRequestDto){
-        return ResponseEntity.status(HttpStatus.OK).body(inspectionService.updateBookingDetails(inspectionId, inspectionRequestDto));
-    }
-
     @GetMapping("/view-booking-details/")
     public ResponseEntity<InspectionResponseDto> fetchBookingDetailsById(@RequestParam("inspectionId") String inspectionId){
         return ResponseEntity.status(HttpStatus.OK).body(inspectionService.findBookingById(inspectionId));
@@ -70,5 +65,10 @@ public class InspectionController {
     @PutMapping("booking/{propertyId}/confirm")
     public ResponseEntity<InspectionResponseDto> confirmBookingStatus(@PathVariable("propertyId") String propertyId){
         return ResponseEntity.ok(inspectionService.confirmBookingStatus(propertyId));
+    }
+
+    @PutMapping("booking/{propertyId}/reschedule")
+    public ResponseEntity<InspectionResponseDto> rescheduleBooking(@PathVariable("propertyId") String propertyId, String inspectionDate){
+        return ResponseEntity.ok(inspectionService.rescheduleBooking(propertyId, inspectionDate));
     }
 }

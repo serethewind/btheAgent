@@ -75,6 +75,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapToErrorDetails(exception, "BOOKING_NOT_FOUND", webRequest));
     }
 
+    @ExceptionHandler(ReviewResourceNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleReviewResourceNotFoundException(Exception exception, WebRequest webRequest){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapToErrorDetails(exception, "REVIEW_NOT_FOUND", webRequest));
+    }
+
     private ErrorDetails mapToErrorDetails(Exception exception, String errorCodeMessage, WebRequest webRequest){
         return  ErrorDetails.builder()
                 .timeStamp(LocalDateTime.now())

@@ -12,5 +12,5 @@ import java.time.LocalDateTime;
 public class CreateInspectionRequestDto {
     private String userId;
     private String comment;
-    private LocalDateTime inspectionDateTime;
+    private String inspectionDateTime;
 }

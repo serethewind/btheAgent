@@ -3,8 +3,8 @@ package com.betheagent.betheagent.properties.service.impl;
 
 import com.betheagent.betheagent.properties.dto.enums.Rate;
 import com.betheagent.betheagent.properties.dto.enums.Status;
-import com.betheagent.betheagent.properties.entity.PropertyEntity;
 import com.betheagent.betheagent.exception.customExceptions.BadRequestException;
+import com.betheagent.betheagent.properties.entity.PropertyInstance;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -14,15 +14,15 @@ import java.util.Optional;
 @Service
 public class PropertyFilterService {
 
-    public Specification<PropertyEntity> findByUserId(Optional<String> userId) {
+    public Specification<PropertyInstance> findByUserId(Optional<String> userId) {
         return (root, query, criteriaBuilder) -> userId.map(id -> criteriaBuilder.equal(root.get("authorId"), id)).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> findByPropertyName(Optional<String> propertyName) {
+    public Specification<PropertyInstance> findByPropertyName(Optional<String> propertyName) {
         return (root, query, criteriaBuilder) -> propertyName.map(property -> criteriaBuilder.like(root.get("name"), property)).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> findByPropertyType(Optional<String> propertyType) {
+    public Specification<PropertyInstance> findByPropertyType(Optional<String> propertyType) {
         return (root, query, criteriaBuilder) -> propertyType.map(property -> {
                     try {
                         return criteriaBuilder.equal(root.get("propertyType"), Status.valueOf(property.toUpperCase()));
@@ -35,7 +35,7 @@ public class PropertyFilterService {
         ).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> findByStatus(Optional<String> status) {
+    public Specification<PropertyInstance> findByStatus(Optional<String> status) {
         return (root, query, criteriaBuilder) ->
                 status.map(statusOfProperty -> {
                     try {
@@ -47,7 +47,7 @@ public class PropertyFilterService {
                 }).orElseGet((criteriaBuilder::conjunction));
     }
 
-    public Specification<PropertyEntity> findByRate(Optional<String> rate) {
+    public Specification<PropertyInstance> findByRate(Optional<String> rate) {
         return (root, query, criteriaBuilder) -> rate.map(rateInstance -> {
             try {
                 return criteriaBuilder.equal(root.get("rate"), Rate.valueOf(rateInstance.toUpperCase()));
@@ -58,15 +58,15 @@ public class PropertyFilterService {
         }).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> findByNumberOfBedrooms(Optional<Integer> numberOfBedrooms) {
+    public Specification<PropertyInstance> findByNumberOfBedrooms(Optional<Integer> numberOfBedrooms) {
         return (root, query, criteriaBuilder) -> numberOfBedrooms.map(property -> criteriaBuilder.equal(root.get("numberOfBedrooms"), property)).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> findByAmenities(Optional<String> amenities) {
+    public Specification<PropertyInstance> findByAmenities(Optional<String> amenities) {
         return (root, query, criteriaBuilder) -> amenities.map(property -> criteriaBuilder.like(root.get("amenities"), property)).orElseGet(criteriaBuilder::conjunction);
     }
 
-    public Specification<PropertyEntity> uploadedWithinDateRange(Optional<Instant> startDate, Optional<Instant> endDate) {
+    public Specification<PropertyInstance> uploadedWithinDateRange(Optional<Instant> startDate, Optional<Instant> endDate) {
         return (root, query, criteriaBuilder) ->
                 startDate.flatMap(startOfRange ->
                         endDate.map(endOfRange ->
@@ -77,7 +77,7 @@ public class PropertyFilterService {
 
     //Optional<String> userId, Optional<String> propertyName, Optional<String> propertyType, Optional<String> status, Optional<String> rate, Optional<Integer>, Optional<Integer> numberOfBedrooms, Optional <String> amenities, Optional<Instant> startDate, Optional<Instant> endDate
 
-    public Specification<PropertyEntity> filterPropertyAndFindBySpecification(
+    public Specification<PropertyInstance> filterPropertyAndFindBySpecification(
             Optional<String> userId,
             Optional<String> propertyName,
             Optional<String> propertyType,
@@ -88,7 +88,7 @@ public class PropertyFilterService {
             Optional<Instant> startDate,
             Optional<Instant> endDate) {
 
-        Specification<PropertyEntity> specification = Specification
+        Specification<PropertyInstance> specification = Specification
                 .where(findByUserId(userId))
                 .and(findByPropertyName(propertyName))
                 .and(findByPropertyType(propertyType))

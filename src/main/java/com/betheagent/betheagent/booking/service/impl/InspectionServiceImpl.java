@@ -21,6 +21,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,18 +45,13 @@ public class InspectionServiceImpl implements InspectionService {
         InspectionBooking booking = InspectionBooking.builder()
                 .userId(inspectionRequestDto.getUserId())
                 .propertyId(user.getId())
-                .inspectionDateTime(inspectionRequestDto.getInspectionDateTime())
+                .inspectionDateTime(validateDate(inspectionRequestDto.getInspectionDateTime()))
                 .comment(inspectionRequestDto.getComment())
                 .inspectionStatus(InspectionStatus.PENDING)
                 .build();
 
         inspectionRepository.save(booking);
         return mapBookingEntityToDto(booking);
-    }
-
-    @Override
-    public InspectionResponseDto updateBookingDetails(String inspectionId, UpdateInspectionRequestDto inspectionRequestDto) {
-        return null;
     }
 
     @Override
@@ -92,14 +90,29 @@ public class InspectionServiceImpl implements InspectionService {
        return mapBookingEntityToDto(booking);
     }
     @Override
+    //to be done by the seller
     public InspectionResponseDto confirmBookingStatus(String propertyId) {
         InspectionBooking booking = inspectionRepository.findById(propertyId).orElseThrow(() -> new BookingResourceNotFoundException("Booking resource not found. Cancel Booking operation failed."));
-        if (booking.getInspectionStatus().equals(InspectionStatus.CONFIRMED)) {
+        if (booking.getInspectionStatus().equals(InspectionStatus.CONFIRMED) || booking.getInspectionStatus().equals(InspectionStatus.CANCELLED)) {
             throw new BadRequestException("Booking already confirmed. Cancel Booking operation failed");
         }
         booking.setInspectionStatus(InspectionStatus.CONFIRMED);
         inspectionRepository.save(booking);
         return mapBookingEntityToDto(booking);
+    }
+
+    @Override
+    public InspectionResponseDto rescheduleBooking(String propertyId, String inspectionDate) {
+       InspectionBooking booking = inspectionRepository.findById(propertyId).orElseThrow(() -> new BookingResourceNotFoundException("Booking resource not found. Reschedule booking operation failed."));
+
+       if (booking.getInspectionStatus().equals(InspectionStatus.CANCELLED) || booking.getInspectionStatus().equals(InspectionStatus.CONFIRMED)){
+           throw new BadRequestException("Only Pending booking can be rescheduled. Cancel Booking operation failed");
+       }
+
+       LocalDateTime dateTime = validateDate(inspectionDate);
+       booking.setInspectionDateTime(dateTime);
+       inspectionRepository.save(booking);
+       return mapBookingEntityToDto(booking);
     }
 
     private InspectionResponseDto mapBookingEntityToDto(InspectionBooking booking) {
@@ -131,5 +144,18 @@ public class InspectionServiceImpl implements InspectionService {
         listHolder.setPageSize(pageSize);
 
         return new PageImpl<>(listHolder.getPageList(), pageable, list.size());
+    }
+
+    private LocalDateTime validateDate(String dateTimeInString){
+        if (dateTimeInString == null || dateTimeInString.isEmpty()){
+            throw new BadRequestException("Date cannot be null");
+        }
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return LocalDateTime.parse(dateTimeInString, formatter);
+        }
+        catch (Exception e) {
+            throw new BadRequestException("Date patter invalid");
+        }
     }
 }

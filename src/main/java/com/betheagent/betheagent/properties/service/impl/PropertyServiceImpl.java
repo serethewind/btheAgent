@@ -9,14 +9,12 @@ import com.betheagent.betheagent.properties.dto.request.PageRequestDto;
 import com.betheagent.betheagent.properties.dto.request.PropertyRequestDto;
 import com.betheagent.betheagent.properties.dto.request.PropertyUpdateRequestDto;
 import com.betheagent.betheagent.properties.dto.response.PropertyResponseDto;
-import com.betheagent.betheagent.properties.entity.PropertyEntity;
+import com.betheagent.betheagent.properties.entity.PropertyInstance;
 import com.betheagent.betheagent.properties.repository.PropertyRepository;
 import com.betheagent.betheagent.properties.service.PropertyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PagedListHolder;
-import org.springframework.beans.support.PropertyComparator;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -42,7 +40,7 @@ public class PropertyServiceImpl implements PropertyService {
 
         UserInstance user = userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User with id not found"));
 
-        PropertyEntity propertyEntity = PropertyEntity.builder()
+        PropertyInstance propertyEntity = PropertyInstance.builder()
                 .authorId(user.getId())
                 .name(propertyRequestDto.getName())
                 .description(propertyRequestDto.getDescription())
@@ -52,49 +50,49 @@ public class PropertyServiceImpl implements PropertyService {
                 .price(propertyRequestDto.getPrice())
                 .numberOfBathrooms(propertyRequestDto.getNumberOfBathrooms())
                 .maximumOccupancy(propertyRequestDto.getMaximumOccupancy())
-                .amenities(propertyRequestDto.getAmenities())
-                .images(propertyRequestDto.getImages())
+//                .amenities(propertyRequestDto.getAmenities())
+//                .images(propertyRequestDto.getImages())
                 .videos(propertyRequestDto.getVideos())
                 .availabilityStatus(propertyRequestDto.getAvailabilityStatus())
                 .build();
 
         propertyRepository.save(propertyEntity);
-        return mapPropertyEntityToPropertyResponse(propertyEntity);
+        return mapPropertyInstanceToPropertyResponse(propertyEntity);
     }
 
     @Override
     public PropertyResponseDto findPropertyById(String propertyId) {
-        PropertyEntity propertyEntity = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found}", propertyId)));
-        return mapPropertyEntityToPropertyResponse(propertyEntity);
+        PropertyInstance propertyEntity = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found}", propertyId)));
+        return mapPropertyInstanceToPropertyResponse(propertyEntity);
     }
 
     @Override
     public Page<PropertyResponseDto> viewAllProperties(Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
         PageRequestDto pageRequestDto = mapRequestParamToPageRequestDto(pageNo, pageSize, sortDirection, byColumn);
-        List<PropertyResponseDto> propertyList = propertyRepository.findAll().stream().map(this::mapPropertyEntityToPropertyResponse).collect(Collectors.toList());
+        List<PropertyResponseDto> propertyList = propertyRepository.findAll().stream().map(this::mapPropertyInstanceToPropertyResponse).collect(Collectors.toList());
         return createPage(pageNo, pageSize, propertyList);
     }
 
     @Override
     public Page<PropertyResponseDto> viewAllPropertiesByUser(String userId, Integer pageNo, Integer pageSize, String sortDirection, String byColumn) {
         PageRequestDto pageRequestDto = mapRequestParamToPageRequestDto(pageNo, pageSize, sortDirection, byColumn);
-        List<PropertyResponseDto> propertyList = propertyRepository.findAllPropertiesByUserId(userId).map(this::mapPropertyEntityToPropertyResponse).toList();
+        List<PropertyResponseDto> propertyList = propertyRepository.findAllPropertiesByUserId(userId).map(this::mapPropertyInstanceToPropertyResponse).toList();
         return createPage(pageNo, pageSize, propertyList);
     }
 
     @Override
     public PropertyResponseDto updatePropertyById(String propertyId, PropertyUpdateRequestDto propertyUpdateRequestDto) {
-        PropertyEntity property = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found", propertyId)));
+        PropertyInstance property = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found", propertyId)));
 
         return null;
     }
 
     @Override
     public PropertyResponseDto removePropertyById(String propertyId) {
-        PropertyEntity property = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found. Delete operation cannot be performed.", propertyId)));
+        PropertyInstance property = propertyRepository.findById(propertyId).orElseThrow(() -> new PropertyNotFoundException(String.format("Property with id: %s not found. Delete operation cannot be performed.", propertyId)));
         property.setAvailabilityStatus(Status.DELETED);
         propertyRepository.save(property);
-        return mapPropertyEntityToPropertyResponse(property);
+        return mapPropertyInstanceToPropertyResponse(property);
     }
 
     @Override
@@ -115,13 +113,13 @@ public class PropertyServiceImpl implements PropertyService {
                         Optional.ofNullable(recentDate),
                         Optional.ofNullable(presentDate)
                 )
-        ).stream().map(this::mapPropertyEntityToPropertyResponse).toList();
+        ).stream().map(this::mapPropertyInstanceToPropertyResponse).toList();
 
         return createPage(pageNo, pageSize, propertyResponseDtoList);
     }
 
 
-    private PropertyResponseDto mapPropertyEntityToPropertyResponse(PropertyEntity propertyEntity) {
+    private PropertyResponseDto mapPropertyInstanceToPropertyResponse(PropertyInstance propertyEntity) {
 
         return PropertyResponseDto.builder()
                 .authorId(propertyEntity.getId())
@@ -133,8 +131,8 @@ public class PropertyServiceImpl implements PropertyService {
                 .price(propertyEntity.getPrice())
                 .numberOfBathrooms(propertyEntity.getNumberOfBathrooms())
                 .maximumOccupancy(propertyEntity.getMaximumOccupancy())
-                .amenities(propertyEntity.getAmenities())
-                .images(propertyEntity.getImages())
+//                .amenities(propertyEntity.getAmenities())
+//                .images(propertyEntity.getImages())
                 .videos(propertyEntity.getVideos())
                 .availabilityStatus(propertyEntity.getAvailabilityStatus())
                 .build();
